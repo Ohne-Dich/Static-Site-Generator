@@ -1,5 +1,7 @@
 __pycache__/
 
+public/
+
 node_modules/
 
 .env
