@@ -1,5 +1,6 @@
 import os
 import shutil
+import sys
 
 from copystatic import copy_files_recursive
 from htmlnode import HTMLNode
@@ -7,7 +8,14 @@ from markdown_blocks import markdown_to_html_node
 
 
 dir_path_static = "./static"
-dir_path_public = "./public"
+dir_path_public = "./docs"
+dir_path_content = "./content"
+template_path = "./template.html"
+
+if len(sys.argv) > 1:
+    basepath = sys.argv[1]
+else:
+    basepath = "/"
 
 def extract_title(markdown):
     lines = markdown.split("\n")
@@ -16,7 +24,7 @@ def extract_title(markdown):
             return line.lstrip("#").strip()
     raise Exception("No header found")
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
 
     with open(from_path, 'r') as file:
@@ -28,24 +36,24 @@ def generate_page(from_path, template_path, dest_path):
     html_node = markdown_to_html_node(markdown)
     html_string = html_node.to_html()
     title = extract_title(markdown)
-    full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", html_string)
+    full_html = template.replace("{{ Title }}", title).replace("{{ Content }}", html_string).replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
     
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
 
     with open(dest_path, 'w') as output_file:
         output_file.write(full_html) 
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     pathes = os.listdir(dir_path_content)
     for path in pathes:
         full_source_path = os.path.join(dir_path_content, path)
         if os.path.isfile(full_source_path):
             dest_path = os.path.join(dest_dir_path, path.replace('.md', '.html'))
-            generate_page(full_source_path, template_path, dest_path)
+            generate_page(full_source_path, template_path, dest_path, basepath)
         else:          
             next_dir_path_content = os.path.join(dir_path_content, path)
             next_dest_dir_path = os.path.join(dest_dir_path, path)
-            generate_pages_recursive(next_dir_path_content, template_path, next_dest_dir_path)
+            generate_pages_recursive(next_dir_path_content, template_path, next_dest_dir_path, basepath)
 
 def main():
     print("Deleting public directory...")
@@ -62,7 +70,8 @@ def main():
     generate_pages_recursive(
         dir_path_content="./content", 
         template_path="./template.html", 
-        dest_dir_path="./public"
+        dest_dir_path="./docs",
+        basepath=basepath
     )
 
 main()
