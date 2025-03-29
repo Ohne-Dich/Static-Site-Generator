@@ -35,6 +35,17 @@ def generate_page(from_path, template_path, dest_path):
     with open(dest_path, 'w') as output_file:
         output_file.write(full_html) 
 
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+    pathes = os.listdir(dir_path_content)
+    for path in pathes:
+        full_source_path = os.path.join(dir_path_content, path)
+        if os.path.isfile(full_source_path):
+            dest_path = os.path.join(dest_dir_path, path.replace('.md', '.html'))
+            generate_page(full_source_path, template_path, dest_path)
+        else:          
+            next_dir_path_content = os.path.join(dir_path_content, path)
+            next_dest_dir_path = os.path.join(dest_dir_path, path)
+            generate_pages_recursive(next_dir_path_content, template_path, next_dest_dir_path)
 
 def main():
     print("Deleting public directory...")
@@ -48,10 +59,10 @@ def main():
     copy_files_recursive(dir_path_static, dir_path_public)
 
     print("Generating index.html...")
-    generate_page(
-        from_path="./content/index.md", 
+    generate_pages_recursive(
+        dir_path_content="./content", 
         template_path="./template.html", 
-        dest_path="./public/index.html"
+        dest_dir_path="./public"
     )
 
 main()
